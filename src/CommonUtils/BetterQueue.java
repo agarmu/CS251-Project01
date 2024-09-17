@@ -72,16 +72,73 @@ public class BetterQueue<E> implements BetterQueueInterface<E> {
      *   hint: modulus might be helpful
      */
     private E[] queue;
-
+    private long out_idx;
+    private long in_idx;
+    private long capacity;
+    private long size;
 
     /**
      * Constructs an empty queue
      */
     @SuppressWarnings("unchecked")
     public BetterQueue(){
-        //todo
+        this.in_idx = 0;
+        this.out_idx = 0;
+        this.size = 0;
+        this.capacity = INIT_CAPACITY;
+        this.queue = (E[]) new Object[INIT_CAPACITY];
+    }
+    private int generateNewCapacityUpsize() throws OutOfMemoryError {
+        long newCap = ((long)this.capacity) * ((long)INCREASE_FACTOR);
+        if (newCap > Integer.MAX_VALUE) {
+            newCap = ((long)this.capacity) + ((long)CONSTANT_INCREMENT);
+            if (newCap > Integer.MAX_VALUE) {
+                throw new OutOfMemoryError();
+            }
+        }
+        return (int)newCap;
     }
 
+    @SuppressWarnings("unchecked")
+    private void sizeUp() throws OutOfMemoryError {
+        if (this.size < this.capacity) {
+            /* nothing to be done, yay! */
+            return;
+        }
+        /* let's determine what the new size will be */
+        int newCap = generateNewCapacityUpsize();
+        E[] newQueue = (E[])new Object[newCap];
+        /* copy over */
+        for (int i = 0; i < size; i++) {
+            long from = (this.in_idx + i) % this.capacity;
+            newQueue[i] = queue[(int)from];
+        }
+        this.queue = newQueue;
+        this.capacity = newCap;
+        this.out_idx = 0;
+        this.in_idx = size;
+    }
+
+    private void sizeDown() throws OutOfMemoryError {
+        /* too big to downsize */
+        if (this.size >= this.capacity * DECREASE_FACTOR) {
+            return;
+        }
+        /* also, cannot go smaller than min capacity */
+        if (this.size <= INIT_CAPACITY) { return; }
+
+        /* determine new capacity & generate */
+        int newCap = Integer.max((int)(DECREASE_FACTOR * this.capacity), INIT_CAPACITY);
+        E[] newQueue = (E[])new Object[newCap];
+        for (int i = 0; i < this.size; i++) {
+            long from = (this.out_idx + i) % this.capacity;
+            newQueue[i] = queue[(int)from];
+        }
+        this.queue = newQueue;
+        this.capacity = newCap;
+        this.out_idx = 0;
+        this.in_idx = size;
+    }
     /**
      * Add an item to the back of the queue
      *
@@ -90,7 +147,15 @@ public class BetterQueue<E> implements BetterQueueInterface<E> {
      */
     @Override
     public void add(E item) {
-        //todo
+        /* make sure we weren't given a bogus item */
+        if (item == null) { throw new NullPointerException(); }
+        /* size up (if needed!) */
+        this.sizeUp();
+        /* place the item */
+        this.queue[(int)this.in_idx] = item;
+        /* update indices */
+        this.in_idx = (this.in_idx + 1) % this.capacity;
+        this.size++;
     }
 
     /**
@@ -100,8 +165,8 @@ public class BetterQueue<E> implements BetterQueueInterface<E> {
      */
     @Override
     public E peek() {
-        //todo
-        return null;
+        if (this.isEmpty()) { return null; }
+        return this.queue[(int)this.out_idx];
     }
 
     /**
@@ -111,8 +176,17 @@ public class BetterQueue<E> implements BetterQueueInterface<E> {
      */
     @Override
     public E remove() {
-        //todo
-        return null;
+        if (this.isEmpty()) { return null; }
+        /*  take the item out */
+        E item = this.queue[(int)this.out_idx];
+        this.queue[(int)this.out_idx] = null;
+        /* update out index and size */
+        this.out_idx = (this.out_idx + 1) % this.capacity;
+        this.size--;
+        /* size the array down, if necessary */
+        this.sizeDown();
+        /* return the item */
+        return item;
     }
 
     /**
@@ -122,8 +196,7 @@ public class BetterQueue<E> implements BetterQueueInterface<E> {
      */
     @Override
     public int size() {
-        //todo
-        return -1;
+        return (int)this.size;
     }
 
     /**
@@ -133,8 +206,14 @@ public class BetterQueue<E> implements BetterQueueInterface<E> {
      */
     @Override
     public boolean isEmpty() {
-        //todo
-        return false;
+        return (this.size == 0);
+    }
+
+    public int getInIndex() {
+        return (int)this.in_idx;
+    }
+    public int getOutIndex() {
+        return (int)this.out_idx;
     }
 
     /**

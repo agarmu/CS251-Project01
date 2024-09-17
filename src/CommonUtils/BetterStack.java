@@ -61,7 +61,7 @@ public class BetterStack<E> implements BetterStackInterface<E> {
         this.size = 0;
     }
 
-    private int generateNewCapacityUpsize() {
+    private int generateNewCapacityUpsize() throws OutOfMemoryError {
         long newCap = ((long)this.capacity) * ((long)INCREASE_FACTOR);
         if (newCap > Integer.MAX_VALUE) {
             newCap = ((long)this.capacity) + ((long)CONSTANT_INCREMENT);
@@ -71,7 +71,9 @@ public class BetterStack<E> implements BetterStackInterface<E> {
         }
         return (int)newCap;
     }
-    private void sizeUp() {
+
+    @SuppressWarnings("unchecked")
+    private void sizeUp() throws OutOfMemoryError {
         if (this.size != this.capacity) {
             return;
         }
@@ -84,10 +86,13 @@ public class BetterStack<E> implements BetterStackInterface<E> {
         this.capacity = newCap;
     }
 
+    @SuppressWarnings("unchecked")
     private void sizeDown() {
         if (this.size >= this.capacity * DECREASE_FACTOR) {
             return;
         }
+        /* also, cannot go smaller than min capacity */
+        if (this.size <= INIT_CAPACITY) { return; }
         int newCap = Integer.max((int)(DECREASE_FACTOR * this.capacity), INIT_CAPACITY);
         E[] newStack = (E[])new Object[newCap];
         for (int i = 0; i < this.size; i++) {
@@ -128,6 +133,7 @@ public class BetterStack<E> implements BetterStackInterface<E> {
         this.size--;
         E item = this.stack[this.size];
         this.stack[this.size] = null;
+        this.sizeDown();
         return item;
     }
 
