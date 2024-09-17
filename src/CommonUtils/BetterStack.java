@@ -48,17 +48,54 @@ public class BetterStack<E> implements BetterStackInterface<E> {
      * note in the class header comment).
      */
     private E[] stack;
-
+    private int capacity;
+    private int size;
 
     /**
      * Constructs an empty stack
      */
     @SuppressWarnings("unchecked")
     public BetterStack(){
-        //todo
+        this.stack = (E[]) new Object[INIT_CAPACITY];
+        this.capacity = INIT_CAPACITY;
+        this.size = 0;
     }
 
+    private int generateNewCapacityUpsize() {
+        long newCap = ((long)this.capacity) * ((long)INCREASE_FACTOR);
+        if (newCap > Integer.MAX_VALUE) {
+            newCap = ((long)this.capacity) + ((long)CONSTANT_INCREMENT);
+            if (newCap > Integer.MAX_VALUE) {
+                throw new OutOfMemoryError();
+            }
+        }
+        return (int)newCap;
+    }
+    private void sizeUp() {
+        if (this.size != this.capacity) {
+            return;
+        }
+        int newCap = generateNewCapacityUpsize();
+        E[] newStack = (E[])new Object[newCap];
+        for (int i = 0; i < this.size; i++) {
+            newStack[i] = this.stack[i];
+        }
+        this.stack = newStack;
+        this.capacity = newCap;
+    }
 
+    private void sizeDown() {
+        if (this.size >= this.capacity * DECREASE_FACTOR) {
+            return;
+        }
+        int newCap = Integer.max((int)(DECREASE_FACTOR * this.capacity), INIT_CAPACITY);
+        E[] newStack = (E[])new Object[newCap];
+        for (int i = 0; i < this.size; i++) {
+            newStack[i] = this.stack[i];
+        }
+        this.capacity = newCap;
+        this.stack = newStack;
+    }
     /**
      * Push an item onto the top of the stack
      *
@@ -67,7 +104,14 @@ public class BetterStack<E> implements BetterStackInterface<E> {
      */
     @Override
     public void push(E item) throws OutOfMemoryError {
-        //todo
+        if (item == null) {
+            throw new NullPointerException();
+        }
+        /* increase size if necessary */
+        this.sizeUp();
+        /* push to stack */
+        this.stack[this.size] = item;
+        this.size++;
     }
 
     /**
@@ -78,8 +122,13 @@ public class BetterStack<E> implements BetterStackInterface<E> {
      */
     @Override
     public E pop() {
-        //todo
-        return null;
+        if (this.isEmpty()) {
+            throw new EmptyStackException();
+        }
+        this.size--;
+        E item = this.stack[this.size];
+        this.stack[this.size] = null;
+        return item;
     }
 
     /**
@@ -90,8 +139,10 @@ public class BetterStack<E> implements BetterStackInterface<E> {
      */
     @Override
     public E peek() {
-        //todo
-        return null;
+        if (this.isEmpty()) {
+            throw new EmptyStackException();
+        }
+        return this.stack[this.size - 1];
     }
 
     /**
@@ -101,8 +152,7 @@ public class BetterStack<E> implements BetterStackInterface<E> {
      */
     @Override
     public boolean isEmpty() {
-        //todo
-        return false;
+        return (this.size == 0);
     }
 
     /**
@@ -112,8 +162,7 @@ public class BetterStack<E> implements BetterStackInterface<E> {
      */
     @Override
     public int size() {
-        //todo
-        return -1;
+        return this.size;
     }
 
     /**
