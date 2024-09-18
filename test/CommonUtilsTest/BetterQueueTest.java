@@ -196,12 +196,40 @@ public class BetterQueueTest {
                 q.add(i);
             }
             for(int i=0; i<MAX_NUM_TO_ADD; i++){
-                assertEquals(i, q.remove());
+                int in = q.getInIndex();
+                int out = q.getOutIndex();
+                Integer x = q.remove();
+                assertEquals(i, x);
             }
             assertEquals(0, q.size());
             assertTrue(q.isEmpty());
         }
 
+        @Test
+        void testBasic() {
+            BetterQueue<Integer> q = new BetterQueue<>();
+            q.add(1);
+            q.add(2);
+            q.add(3);
+            q.add(4);
+            q.add(5);
+            assertEquals(5, q.size());
+            assertEquals(q.remove(),  1);
+            assertEquals(q.remove(), 2);
+            assertEquals(q.remove(), 3);
+            assertEquals(q.remove(), 4);
+            q.add(6);
+            q.add(7);
+            q.add(8);
+            q.add(9);
+            assertEquals(5, q.remove());
+            assertEquals(6, q.remove());
+            assertEquals(7, q.remove());
+            assertEquals(8, q.remove());
+            assertEquals(9, q.remove());
+
+            assertTrue(q.isEmpty());
+        }
         /**
          * Assumes initial capacity is 8, plays around with the "circular" part
          */
