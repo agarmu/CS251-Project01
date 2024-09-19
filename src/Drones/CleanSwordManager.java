@@ -41,6 +41,8 @@ public class CleanSwordManager implements CleanSwordManagerInterface {
         long currentTime = 0;
         while (!requests.isEmpty()) {
             long requestReceiveTime = requests.remove();
+            /* generate sword */
+            swords.add(new SwordData(requestReceiveTime,cleaningTime));
             /* if we don't have a sword ready, we jump in time until we do */
             SwordData swordData = swords.remove();
             /* we can only clean one sword at a time--
@@ -55,7 +57,6 @@ public class CleanSwordManager implements CleanSwordManagerInterface {
             long timeFilled = Math.max(requestReceiveTime,currentTime);
             long timeToFulfill = timeFilled - requestReceiveTime;
             result.add(new CleanSwordTimes(timeFilled,timeToFulfill));
-            swords.add(new SwordData(requestReceiveTime,cleaningTime));
         }
         return result;
     }
@@ -68,13 +69,12 @@ public class CleanSwordManager implements CleanSwordManagerInterface {
      */
     @Override
     public ArrayList<CleanSwordTimes> getCleaningTimes(String filename) {
-        long cleaningTime = 0;
         try {
             BufferedReader bf = new BufferedReader(new FileReader(filename));
             String[] firstLine = bf.readLine().split(" ");
             long numSwords = Long.parseLong(firstLine[0]);
             long numRequests = Long.parseLong(firstLine[1]);
-            cleaningTime = Long.parseLong(firstLine[2]);
+            long cleaningTime = Long.parseLong(firstLine[2]);
             BetterQueue<SwordData> swords = readSwordList(bf, numSwords);
             BetterQueue<Long> requests = readRequestList(bf, numRequests);
             bf.close();
